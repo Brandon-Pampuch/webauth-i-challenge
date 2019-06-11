@@ -1,49 +1,44 @@
 const express = require("express");
 const helmet = require("helmet");
-const bcrypt = require("bcrypt");
+
+const session = require("express-session");
+const knexSessionStore = require("connect-session-knex")(session);
 
 const Users = require("../users/users-model");
 const usersRouter = require("../users/users-router")
+const authRouter = require("../auth/authRouter")
 
 const server = express();
 
+const sessionConfig = {
+  name: 'monkey', // by default it would be sid
+  secret: 'keep it secret, keep it safe!',
+  resave: false, // if there are no changes to the session don't save it,
+  saveUninitialized: true, // for GDPR compliance
+  cookie: {
+    maxAge: 1000 * 60 * 10, // in milliseconds
+    secure: false, // send cookie only over https, set to true in production
+    httpOnly: true, // always set to true, it means client JS can't access the cookie
+  },
+  store: new knexSessionStore({
+    knex:require('../data/dbConfig'),
+    tablename: 'sessions',
+    sidfieldname: 'sid',
+    createtable: true,
+    clearInterval: 1000 * 60 * 30,
+  })
+};
+
+
+
 server.use(helmet());
 server.use(express.json());
+server.use(session(sessionConfig))
 
 
 //add these to auth router
-server.post("/api/register", (req, res) => {
-  let user = req.body;
-  const hash = bcrypt.hashSync(user.password, 8);
 
-  user.password = hash;
-
-  Users.add(user)
-    .then(saved => {
-      res.status(201).json(saved);
-    })
-    .catch(error => {
-      res.status(500).json(error);
-    });
-});
-
-server.post("/api/login", (req, res) => {
-  const { username, password } = req.body;
-console.log(password)
-  Users.findBy({ username })
-
-    .first()
-    .then(user => {
-      if (user && bcrypt.compareSync(password, user.password)) {
-        res.status(200).json({ message: `Welcome ${user.username}!` });
-      } else {
-        res.status(401).json({ message: "Invalid Credentials" });
-      }
-    })
-    .catch(error => {
-      res.status(500).json(error);
-    });
-});
+server.use('/api/auth', authRouter)
 server.use('/api/users', usersRouter)
 
 
