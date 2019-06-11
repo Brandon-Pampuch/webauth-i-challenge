@@ -10,6 +10,8 @@ const server = express();
 server.use(helmet());
 server.use(express.json());
 
+
+//add these to auth router
 server.post("/api/register", (req, res) => {
   let user = req.body;
   const hash = bcrypt.hashSync(user.password, 8);
