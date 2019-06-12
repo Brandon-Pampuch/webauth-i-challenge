@@ -4,7 +4,7 @@ const helmet = require("helmet");
 const session = require("express-session");
 const knexSessionStore = require("connect-session-knex")(session);
 
-const Users = require("../users/users-model");
+
 const usersRouter = require("../users/users-router")
 const authRouter = require("../auth/authRouter")
 
@@ -40,9 +40,5 @@ server.use(session(sessionConfig))
 
 server.use('/api/auth', authRouter)
 server.use('/api/users', usersRouter)
-
-
-
-
 
 module.exports = server;
